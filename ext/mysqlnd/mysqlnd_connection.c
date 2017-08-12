@@ -123,7 +123,11 @@ MYSQLND_METHOD(mysqlnd_error_info, set_client_error)(MYSQLND_ERROR_INFO * const 
 	if (err_no) {
 		info->error_no = err_no;
 		strlcpy(info->sqlstate, sqlstate, sizeof(info->sqlstate));
-		strlcpy(info->error, error, sizeof(info->error));
+		/* strlcpy is undefined on BSD when src and dst overlap, so if we're setting the same
+		 error string that's already been set, avoid the copy. */
+		if (&info->error != error) {
+			strlcpy(info->error, error, sizeof(info->error));			
+		}
 		if (info->error_list) {
 			MYSQLND_ERROR_LIST_ELEMENT error_for_the_list = {0};
 
